@@ -30,9 +30,8 @@ const productSchema = new Schema(
             required: true
         },
         image: {
-            type: String,
-            required: true
-
+            publicId: String,
+            url: String
         },
         brand: {
             type: String,
@@ -44,7 +43,7 @@ const productSchema = new Schema(
 
         },
         category: {
-            type: ObjectId,
+            type: mongoose.Schema.Types.ObjectId,
             ref: "Category",
             required: true
 
