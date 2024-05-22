@@ -63,7 +63,7 @@ export const authorizedAdminOrSeller = async (req, res, next) => {
     } else {
         return res.status(401).json({
             success: false,
-            message:"Not authorized as an seller",
+            message:"Not authorized as an seller or admin",
             isAuthenticated: false
         });
     }
