@@ -21,7 +21,7 @@ export const verifyUser = async(req, res, next) => {
             });
         }
         req.user = user;
-        console.log('user test pass')
+        // console.log('user test pass')
         next();
 } catch (error) {
     return res.status(500).json({
@@ -34,7 +34,7 @@ export const verifyUser = async(req, res, next) => {
 
 export const authorizedAdmin = async (req, res, next) => {
     if(req.user && req.user.role === 'admin') {
-        console.log('admin test pass')
+        // console.log('admin test pass')
         next()
     } else {
         return res.status(401).json({
