@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { authorizedAdminOrSeller, authorizedSeller, verifyUser } from "../middlewares/verifyjwt.middleware.js";
+import { authorizedAdmin, authorizedAdminOrSeller, authorizedSeller, verifyUser } from "../middlewares/verifyjwt.middleware.js";
 import upload from "../middlewares/multer.middleware.js"
-import { CreateProduct, DeleteProductById, FetchNewProduct, FetchProducts, FetchTopProduct, ProductById, ProductReview, ProductsBySeller, UpdateProductById } from "../controllers/product.controller.js";
+import { AdminDashboard, CreateProduct, DeleteProductById, FetchNewProduct, FetchProducts, FetchTopProduct, ProductById, ProductReview, ProductsBySeller, SellerDashboard, UpdateProductById } from "../controllers/product.controller.js";
 
 const router = new Router();
 
@@ -24,7 +24,14 @@ router.route("/review/:id")
 
 router.route("/top/products")
 .get(FetchTopProduct);
+
 router.route("/new/products")
 .get(FetchNewProduct);
+
+router.route("/admin/dashboard")
+.get(verifyUser, authorizedAdmin, AdminDashboard);
+
+router.route("/seller/dashboard")
+.get(verifyUser, authorizedSeller, SellerDashboard);
 
 export default router

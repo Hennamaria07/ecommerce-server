@@ -1,4 +1,6 @@
 import Product from "../models/product.model.js";
+import User from "../models/user.model.js";
+import Order from "../models/order.model.js";
 import uploadOnCloudinary from "../utils/uploadOnCloudinary.js";
 import deleteImage from "../utils/removeCloudinary.js";
 
@@ -188,7 +190,7 @@ export const FetchProducts = async (req, res) => {
         let args = {};
         if (category?.length > 0) args.category = category; //["id1", "id2"]
         if (brand?.length > 0) args.brand = brand; 
-        if (radio?.length) args.price = { $gte: radio[0], $lte: radio[1] };
+        if (radio?.length > 0) args.price = { $gte: radio[0], $lte: radio[1] };
         if(search !== "") args.$or = [
             { name: { $regex: search, $options: "i" } },
             { description: { $regex: search, $options: "i" } },
@@ -310,4 +312,70 @@ export const FetchNewProduct = async (req, res) => {
     }
 }
 
+// ADMIN DASHBOARD
+export const AdminDashboard = async (req, res) => {
+    try {
+        const count = await Product.countDocuments();
+        const userCount = await User.find({role: "user"}).countDocuments();
+        const sellerCount = await User.find({role: "seller"}).countDocuments();
+        const orderCount = await Order.countDocuments();
+        return res.status(200).json({
+            success: true,
+            data: {
+                totalProduct: count,
+                totalUser: userCount,
+                totalSeller: sellerCount,
+                totalOrder: orderCount,
+            }
+        })
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+}
+
+// SELLER DASHBOARD
+export const SellerDashboard = async (req, res) => {
+    try {
+        const count = await Product.find({seller: req.user.id}).countDocuments();
+        const orders = await Order.find();
+        if(!orders) {
+            return res.status(409).json({
+                success: false,
+                message: "Unable to fetch"
+            });
+        }
+
+        const sellerOrders = [];
+
+        // Iterate over each order
+        orders.map(order => {
+            // Filter orderItems where seller matches req.user._id
+            const filteredItems = order.orderItems.filter(item => item.seller.toString() === req.user._id.toString());
+            // console.log("filteredItems", filteredItems);
+
+            // If there are any filtered items, create a new order object with those items
+            if (filteredItems.length > 0) {
+                sellerOrders.push({
+                    ...order._doc, // Spread the original order properties
+                    orderItems: filteredItems // Override orderItems with the filtered items
+                });
+            }
+        });
+        return res.status(200).json({
+            success: true,
+            data: {
+                totalProduct: count,
+                totalOrder: sellerOrders.length,
+            }
+        })
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+}
 
