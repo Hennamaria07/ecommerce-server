@@ -150,7 +150,21 @@ export const Profile = async (req, res) => {
 // FETCH ALL USERS
 export const Users = async (req, res) => {
     try {
-        const users = await User.find({ role: "user" });
+        const search = req.query.search || "";
+        const page = parseInt(req.query.page) || 1;
+        const pageSize = 6;
+
+        const args = {};
+        if(search !=="") args.$or = [
+            { firstName: { $regex: search, $options: "i" } },
+            { email: { $regex: search, $options: "i" } },
+        ]
+        args.role = "user";
+
+        const count = await User.countDocuments(args);
+        const skip = (page - 1) * pageSize;
+
+        const users = await User.find(args).limit(pageSize);
         if (!users) {
             return res.status(500).json({
                 success: false,
@@ -159,7 +173,9 @@ export const Users = async (req, res) => {
         }
         return res.status(200).json({
             success: true,
-            data: users
+            data: users,
+            pages: Math.ceil(count / pageSize),
+            currentPage: page,
         });
     } catch (error) {
         return res.status(500).json({
@@ -169,11 +185,24 @@ export const Users = async (req, res) => {
     }
 }
 
-// FETCH ALL USERS
+// FETCH ALL SELLERS
 export const Sellers = async (req, res) => {
     try {
-        const sellers = await User.find({ role: "seller" });
-        console.log('sellers', sellers)
+        const search = req.query.search || "";
+        const page = parseInt(req.query.page) || 1;
+        const pageSize = 6;
+
+        const args = {};
+        if(search!=="") args.$or = [
+            { firstName: { $regex: search, $options: "i" } },
+            { email: { $regex: search, $options: "i" } },
+        ]
+        args.role = "seller";
+        
+        const count = await User.countDocuments(args);
+        const skip = (page - 1) * pageSize;
+
+        const sellers = await User.find(args).limit(pageSize);
         if (!sellers) {
             return res.status(500).json({
                 success: false,
@@ -182,7 +211,9 @@ export const Sellers = async (req, res) => {
         }
         return res.status(200).json({
             success: true,
-            data: sellers
+            data: sellers,
+            pages: Math.ceil(count / pageSize),
+            currentPage: page,
         });
     } catch (error) {
         return res.status(500).json({
