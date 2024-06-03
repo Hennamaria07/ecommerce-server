@@ -27,7 +27,8 @@ export const verifyUser = async(req, res, next) => {
     return res.status(500).json({
         success: false,
         message: error.message,
-        isAuthenticated: false
+        isAuthenticated: false,
+        tokenExpired: error.expiredAt
     });
 }
 }

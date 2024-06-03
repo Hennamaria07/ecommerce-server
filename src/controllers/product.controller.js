@@ -8,8 +8,9 @@ import deleteImage from "../utils/removeCloudinary.js";
 export const CreateProduct = async (req, res) => {
     try {
         const { name, description, price, category, quantity, brand } = req.body;
-        const imageLocalPath = req.file.path
-        if ([name, description, price, category, quantity, brand, imageLocalPath].some(field => !field)) {
+        const imageFiles = req.files;
+        console.log('imageFiles', imageFiles)
+        if ([name, description, price, category, quantity, brand, imageFiles].some(field => !field)) {
             return res.status(400).json({
                 success: false,
                 message: "All fields are required"
@@ -22,8 +23,17 @@ export const CreateProduct = async (req, res) => {
                 message: "Product is already exist",
             })
         }
-        const response = await uploadOnCloudinary(imageLocalPath, req.user.id);
-        const product = new Product({ ...req.body, seller: req.user.id, image: { publicId: response.public_id, url: response.url } })
+        let imageArr = [];
+        await Promise.all(imageFiles.map(async (file, index) => {
+            const response = await uploadOnCloudinary(file.path, req.user._id + index);
+            console.log(response);
+            imageArr.push({
+                publicId: response.public_id,
+                url: response.url
+            });
+        }));
+        // console.log('imageArr', imageArr);
+        const product = new Product({ ...req.body, seller: req.user.id, images:imageArr });
         // console.log(product)
         await product.save();
         return res.status(201).json({
@@ -51,22 +61,29 @@ export const UpdateProductById = async (req, res) => {
             })
         }
         const { name, description, price, category, quantity, brand } = req.body;
-        const imageLocalPath = req.file.path
+        const imageFiles = req.files
 
-        if ([name, description, price, category, quantity, brand, imageLocalPath].some(field => !field)) {
+        if ([name, description, price, category, quantity, brand, imageFiles].some(field => !field)) {
             return res.status(400).json({
                 success: false,
                 message: "All fields are required"
             })
         }
-
-        await deleteImage(product.seller.toString());
-        const response = await uploadOnCloudinary(imageLocalPath, req.user.id);
+        await Promise.all(imageFiles?.map(async(file, index) =>await deleteImage(product.seller.toString()+index)))
+        let imageArr = [];
+        await Promise.all(imageFiles.map(async (file, index) => {
+            const response = await uploadOnCloudinary(file.path, req.user._id + index);
+            // console.log(response);
+            imageArr.push({
+                publicId: response.public_id,
+                url: response.url
+            });
+        }));
 
         const updatedProduct = await Product.findByIdAndUpdate(
             req.params.id,
             {
-                $set: { ...req.body, seller: req.user.id, image: { publicId: response.public_id, url: response.url } }
+                $set: { ...req.body, seller: req.user.id, image:imageArr }
             },
             {
                 new: true
@@ -159,7 +176,8 @@ export const DeleteProductById = async (req, res) => {
                 message: "Product not found"
             });
         }
-        await deleteImage(product.seller);
+        await Promise.all(product.images?.map(async(image, index) => await deleteImage(product.seller+index)))
+        
         const deletePrdouct = await Product.findByIdAndDelete(req.params.id);
         if (!deletePrdouct) {
             return res.status(404).json({
@@ -296,7 +314,7 @@ export const FetchTopProduct = async (req, res) => {
     }
 }
 
-//TOP 4 PRODUCTS
+//LATEST PRODUCTS
 export const FetchNewProduct = async (req, res) => {
     try {
         const products = await Product.find({}).sort({ _id: -1 }).limit(4);

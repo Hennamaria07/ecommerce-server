@@ -6,7 +6,8 @@ import bcrypt from "bcryptjs";
 
 const options = {
     httpOnly: true,
-    secure: true
+    secure: true,
+    sameSite: "none"
 }
 
 //SIGNUP
@@ -49,7 +50,8 @@ export const SignUp = async (req, res) => {
                 success: true,
                 message: "User registred successfully",
                 isAuthenticated: true,
-                data: createdUser
+                data: createdUser,
+                token
             });
     } catch (error) {
         return res.status(500).json({
@@ -95,6 +97,7 @@ export const SignIn = async (req, res) => {
                 message: "User login successfully",
                 data: loggedUser,
                 isAuthenticated: true,
+                token
             });
     } catch (error) {
         res.status(500).json({

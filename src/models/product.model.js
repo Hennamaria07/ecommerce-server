@@ -29,10 +29,12 @@ const productSchema = new Schema(
             type: String,
             required: true
         },
-        image: {
-            publicId: String,
-            url: String
-        },
+        images: [
+            {
+                publicId: String,
+                url: String
+            }
+        ],
         brand: {
             type: String,
             required: true

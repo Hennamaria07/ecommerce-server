@@ -12,22 +12,18 @@ const orderSchema = mongoose.Schema(
                 name: {
                     type: String,
                     required: true
-
                 },
-                qty: {
+                quantity: {
                     type: Number,
                     required: true
-
                 },
                 image: {
-                    type: String,
-                    required: true
-
+                    publicId: String,
+                    url: String
                 },
                 price: {
                     type: Number,
                     required: true
-
                 },
                 product: {
                     type: mongoose.Schema.Types.ObjectId,
@@ -35,6 +31,11 @@ const orderSchema = mongoose.Schema(
                     ref: "Product",
 
                 },
+                seller: {
+                    type: mongoose.Schema.Types.ObjectId,
+                    required: true,
+                    ref: "User",
+                }
             },
         ],
 
@@ -50,15 +51,18 @@ const orderSchema = mongoose.Schema(
 
             },
             postalCode: {
-                type: String,
+                type: Number,
                 required: true
-
             },
             country: {
                 type: String,
                 required: true
 
             },
+            phone: {
+                type: Number,
+                required: true
+            }
         },
 
         paymentMethod: {
@@ -73,10 +77,10 @@ const orderSchema = mongoose.Schema(
             status: {
                 type: String
             },
-            update_time: {
+            updateTime: {
                 type: String
             },
-            email_address: {
+            emailAddress: {
                 type: String
             },
         },
@@ -84,25 +88,25 @@ const orderSchema = mongoose.Schema(
         itemsPrice: {
             type: Number,
             required: true,
-            default: 0.0,
+            default: 0,
         },
 
         taxPrice: {
             type: Number,
             required: true,
-            default: 0.0,
+            default: 0,
         },
 
         shippingPrice: {
             type: Number,
             required: true,
-            default: 0.0,
+            default: 0,
         },
 
         totalPrice: {
             type: Number,
             required: true,
-            default: 0.0,
+            default: 0,
         },
 
         isPaid: {

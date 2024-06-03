@@ -6,11 +6,11 @@ import { AdminDashboard, CreateProduct, DeleteProductById, FetchNewProduct, Fetc
 const router = new Router();
 
 router.route("/create")
-.post(verifyUser, authorizedAdminOrSeller, upload.single("image"), CreateProduct);
+.post(verifyUser, authorizedAdminOrSeller, upload.array("images", 4), CreateProduct);
 
 router.route("/:id")
 .get(ProductById)
-.put(verifyUser, authorizedAdminOrSeller,upload.single("image"), UpdateProductById)
+.put(verifyUser, authorizedAdminOrSeller,upload.array("images", 4), UpdateProductById)
 .delete(verifyUser, authorizedAdminOrSeller, DeleteProductById)
 
 router.route("/fetch/products")
