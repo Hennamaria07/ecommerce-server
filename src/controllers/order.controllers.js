@@ -1,7 +1,8 @@
-import { request } from "express";
+import { request, response } from "express";
 import Order from "../models/order.model.js";
 import Product from "../models/product.model.js";
 import { calcOrderPrices } from "../utils/calcPrices.js";
+import braintree from "braintree";
 
 //CREATE ORDER
 export const CreateOrder = async (req, res) => {
@@ -324,6 +325,86 @@ export const MarkAsDelivered = async(req, res) => {
                 data: updateOrder
             }
         );
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+}
+
+//PAYMENT GATEWAY
+const gateway = new braintree.BraintreeGateway({
+    environment: braintree.Environment.Sandbox,
+    merchantId: process.env.BRAINTREE_MERCHANT_ID,
+    publicKey: process.env.BRAINTREE_PUBLIC_KEY,
+    privateKey: process.env.BRAINTREE_PRIVATE_KEY,
+  });
+
+//GETTING PAYMENT TOKEN
+export const PaymentToken = async (req, res) => {
+    try {
+        gateway.clientToken.generate({}, (err, response) => {
+            if(err) {
+                return res.status(500).json({
+                    success: false,
+                    message: err.message
+                });
+            } else {
+                return res.status(200).json({
+                    success: true,
+                    data: response
+                })
+            }
+        })
+        
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+}
+
+// PAYMENT
+export const Payment = async (req, res) => {
+    try {
+        const {orderId, nonce} = req.body;
+        const order = await Order.findById(orderId._id);
+        if(!order){
+            return res.status(404).json({
+                success: false,
+                message: "Order not found"
+            });
+        }
+        const totalPrice = order.totalPrice;
+        let newTransaction = gateway.transaction.sale({
+            amount: totalPrice,
+            paymentMethodNonce: nonce,
+            options: {
+                submitForSettlement: true
+            }
+        },
+        async (err, response) => {
+            if(response) {
+                order.isPaid = true;
+                order.paidAt = Date.now();
+                order.paymentResult = response;
+                const updateOrder = await order.save();
+                return res.status(200).json(
+                    {
+                        success: true,
+                        data: updateOrder
+                    }
+                );
+            } else {
+                return res.status(500).json({
+                    success: false,
+                    message: err.message
+                });
+            }
+        }
+    )
     } catch (error) {
         return res.status(500).json({
             success: false,

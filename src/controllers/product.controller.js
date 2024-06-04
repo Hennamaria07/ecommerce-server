@@ -9,7 +9,7 @@ export const CreateProduct = async (req, res) => {
     try {
         const { name, description, price, category, quantity, brand } = req.body;
         const imageFiles = req.files;
-        console.log('imageFiles', imageFiles)
+        // console.log('imageFiles', imageFiles)
         if ([name, description, price, category, quantity, brand, imageFiles].some(field => !field)) {
             return res.status(400).json({
                 success: false,

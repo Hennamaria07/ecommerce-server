@@ -1,6 +1,6 @@
 import { Router } from "express";
 import {authorizedAdmin, authorizedSeller, verifyUser} from "../middlewares/verifyjwt.middleware.js"
-import { CreateOrder, GetOrderBy, MarkAsDelivered, MarkAsPayed, Orders, SellerOrders, TotalCount, TotalSales, TotalSalesByDate, UserOrders } from "../controllers/order.controllers.js";
+import { CreateOrder, GetOrderBy, MarkAsDelivered, MarkAsPayed, Orders, Payment, PaymentToken, SellerOrders, TotalCount, TotalSales, TotalSalesByDate, UserOrders } from "../controllers/order.controllers.js";
 
 const router = new Router();
 
@@ -33,5 +33,10 @@ router.route("/:id/pay")
 
 router.route("/:id/delivered")
 .patch(verifyUser, authorizedAdmin, MarkAsDelivered);
+
+// PAYMENT ROUTES
+router.route("/payment/braintree")
+.get(verifyUser, PaymentToken)
+.post(verifyUser, Payment)
 
 export default router
