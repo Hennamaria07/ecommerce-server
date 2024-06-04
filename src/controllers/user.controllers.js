@@ -3,6 +3,8 @@ import generateToken from "../utils/generateToken.js";
 import deleteImage from "../utils/removeCloudinary.js";
 import uploadCloudinary from "../utils/uploadOnCloudinary.js";
 import bcrypt from "bcryptjs";
+import { v4 as uuidv4 } from 'uuid';
+import { sendResetEmail } from "../utils/resetEmail.js";
 
 const options = {
     httpOnly: true,
@@ -365,5 +367,82 @@ export const UpdatedUserRoleById = async (req, res) => {
             success: false,
             message: error.message
         });
+    }
+}
+
+// FORGOT PASSWORD
+export const ForgotPassword = async (req, res) => {
+    try {
+        const {email} = req.body;
+        const user = await User.findOne({email});
+        if(!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            })
+        }
+        const token = uuidv4();
+        user.forgotPasswordToken = token;
+        user.forgotPasswordExpiry = Date.now() + 3600000; //6mins
+        await user.save();
+        const response = await sendResetEmail({
+            userEmail: user.email,
+            token,
+            userId: user._id,
+            subject: 'Reset Password'
+        })
+        return res.status(200).json({
+            success: true,
+            user: user,
+            message: "Email sent successfully",
+            response
+        })
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        })
+    }
+}
+
+// RESET PASSWORD
+export const ResetPassword = async (req, res) => {
+    try {
+        const {user, token} = req.query;
+        const {password} = req.body;
+        if(!password){
+            return res.status(400).json({
+                success: false,
+                message: "Password is required"
+            })
+        }
+        const userInfo = await User.findById(user);
+        if(!userInfo) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            })
+        }
+        if(token === userInfo.forgotPasswordToken && userInfo.forgotPasswordExpiry > Date.now()) {
+            userInfo.password = await bcrypt.hash(password, 10);
+            userInfo.forgotPasswordToken = undefined;
+            userInfo.forgotPasswordExpiry = undefined;
+            await userInfo.save();
+            return res.status(200).json({
+                success: true,
+                message: "Password updated successfully"
+            })
+        } else {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid token"
+            })
+        }
+        
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        })
     }
 }
