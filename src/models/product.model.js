@@ -70,11 +70,6 @@ const productSchema = new Schema(
             required: true,
             default: 0
         },
-        countInStock: {
-            type: Number,
-            required: true,
-            default: 0
-        },
         seller: {
             type: mongoose.Schema.Types.ObjectId,
             required: true,

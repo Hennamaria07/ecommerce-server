@@ -197,13 +197,47 @@ export const DeleteProductById = async (req, res) => {
     }
 }
 
-// PRODUCTS FILTER AND PAGINATION
+// PRODUCTS PAGINATION FOR ADMIN
 export const FetchProducts = async (req, res) => {
     try {
         const { category, radio, brand, sort } = req.body;
         const search = req.query.search || "";
         const page = parseInt(req.query.page) || 1;
         const pageSize = 6;
+
+        let args = {};
+      if(search !== "") args.$or = [
+            { name: { $regex: search, $options: "i" } },
+            { description: { $regex: search, $options: "i" } },
+        ]
+        // console.log("args: " + JSON.stringify(args));
+
+        // Count total documents matching the query
+        const count = await Product.countDocuments(args);
+        const skip = (page - 1) * pageSize;
+
+        const products = await Product.find(args).populate("category").limit(pageSize).skip(skip);;
+        return res.status(200).json({
+            success: true,
+            data: products,
+            pages: Math.ceil(count / pageSize),
+            currentPage: page,
+        })
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+// PRODUCTS FILTER AND PAGINATION FOR USER
+export const FetchProductsForUser = async (req, res) => {
+    try {
+        const { category, radio, brand, sort } = req.body;
+        const search = req.query.search || "";
+        const page = parseInt(req.query.page) || 1;
+        const pageSize = 8;
 
         let args = {};
         if (category?.length > 0) args.category = category; //["id1", "id2"]
