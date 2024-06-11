@@ -286,6 +286,13 @@ export const MarkAsPayed = async (req, res) => {
                 message: "Order not found"
             });
         }
+       await order.orderItems.map(async (item) => {
+            const product = await Product.findById(item.product);
+            if(product) {
+                product.quantity -= item.quantity
+                await product.save();
+            }
+        })
         order.isPaid = true;
         order.paidAt = Date.now();
         order.paymentResult = {
