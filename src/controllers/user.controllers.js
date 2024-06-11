@@ -5,6 +5,8 @@ import uploadCloudinary from "../utils/uploadOnCloudinary.js";
 import bcrypt from "bcryptjs";
 import { v4 as uuidv4 } from 'uuid';
 import { sendResetEmail } from "../utils/resetEmail.js";
+import { sendAdminEmail } from "../utils/AdminEmail.js";
+import { sendUserEmail } from "../utils/userEmail.js";
 
 const options = {
     httpOnly: true,
@@ -53,7 +55,8 @@ export const SignUp = async (req, res) => {
                 message: "User registred successfully",
                 isAuthenticated: true,
                 data: createdUser,
-                token
+                token,
+                tokenExpiry: Date.now() + 86400000
             });
     } catch (error) {
         return res.status(500).json({
@@ -99,7 +102,8 @@ export const SignIn = async (req, res) => {
                 message: "User login successfully",
                 data: loggedUser,
                 isAuthenticated: true,
-                token
+                token,
+                tokenExpiry: Date.now() + 86400000
             });
     } catch (error) {
         res.status(500).json({
@@ -156,8 +160,8 @@ export const Profile = async (req, res) => {
 export const Users = async (req, res) => {
     try {
         const search = req.query.search || "";
-        const page = parseInt(req.query.page) || 1;
-        const pageSize = 6;
+        // const page = parseInt(req.query.page) || 1;
+        // const pageSize = 6;
 
         const args = {};
         if(search !=="") args.$or = [
@@ -166,10 +170,10 @@ export const Users = async (req, res) => {
         ]
         args.role = "user";
 
-        const count = await User.countDocuments(args);
-        const skip = (page - 1) * pageSize;
+        // const count = await User.countDocuments(args);
+        // const skip = (page - 1) * pageSize;
 
-        const users = await User.find(args).limit(pageSize);
+        const users = await User.find(args);
         if (!users) {
             return res.status(500).json({
                 success: false,
@@ -179,8 +183,8 @@ export const Users = async (req, res) => {
         return res.status(200).json({
             success: true,
             data: users,
-            pages: Math.ceil(count / pageSize),
-            currentPage: page,
+            // pages: Math.ceil(count / pageSize),
+            // currentPage: page,
         });
     } catch (error) {
         return res.status(500).json({
@@ -350,6 +354,10 @@ export const UpdatedUserRoleById = async (req, res) => {
         }
         user.role = req.body.role || user.role;
        const updatedUser = await user.save();
+       await sendAdminEmail({
+        userEmail: updatedUser.email,
+        userName: updatedUser.firstName + " " + updatedUser.lastName
+       })
        return res.status(200).json({
         success: true,
         message: "User updated successfully",
@@ -439,6 +447,34 @@ export const ResetPassword = async (req, res) => {
             })
         }
         
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        })
+    }
+}
+
+// USER MAIL TO ADMIN
+export const SendMailToAdmin = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        if(!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User does not exist"
+            })
+        }
+        const response = await sendUserEmail({
+            userEmail : user.email,
+            subject : "Request to Become a Seller",
+            userId : user._id
+        })
+        return res.status(200).json({
+            success: true,
+            message: "Email sent successfully",
+            response
+        })
     } catch (error) {
         return res.status(500).json({
             success: false,
