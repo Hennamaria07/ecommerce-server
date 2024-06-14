@@ -14,7 +14,7 @@ router.route("/:id")
 .delete(verifyUser, authorizedAdminOrSeller, DeleteProductById)
 
 router.route("/fetch/products")
-.post(FetchProducts);
+.get(verifyUser, authorizedAdmin, FetchProducts);
 
 router.route("/fetch/products/user")
 .post(FetchProductsForUser);

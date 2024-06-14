@@ -13,6 +13,6 @@ router.route("/categories")
 router.route("/:id")
 .get(CategoryById)
 .put(verifyUser, authorizedAdminOrSeller, UpdateCategory)
-.delete(verifyUser, authorizedAdmin, DeleteCategory);
+.delete(verifyUser, authorizedAdminOrSeller, DeleteCategory);
 
 export default router

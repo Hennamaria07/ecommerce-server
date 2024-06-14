@@ -3,7 +3,7 @@ import User from "../models/user.model.js";
 import Order from "../models/order.model.js";
 import uploadOnCloudinary from "../utils/uploadOnCloudinary.js";
 import deleteImage from "../utils/removeCloudinary.js";
-
+import { v4 as uuidv4 } from 'uuid';
 // CREATE PRODUCT
 export const CreateProduct = async (req, res) => {
     try {
@@ -25,8 +25,8 @@ export const CreateProduct = async (req, res) => {
         }
         let imageArr = [];
         await Promise.all(imageFiles.map(async (file, index) => {
-            const response = await uploadOnCloudinary(file.path, req.user._id + index);
-            console.log(response);
+            const response = await uploadOnCloudinary(file.path, uuidv4() + index);
+            // console.log(response);
             imageArr.push({
                 publicId: response.public_id,
                 url: response.url
@@ -63,16 +63,16 @@ export const UpdateProductById = async (req, res) => {
         const { name, description, price, category, quantity, brand } = req.body;
         const imageFiles = req.files
 
-        if ([name, description, price, category, quantity, brand, imageFiles].some(field => !field)) {
+        if ([name, description, price, category, quantity, brand].some(field => !field)) {
             return res.status(400).json({
                 success: false,
                 message: "All fields are required"
             })
         }
-        await Promise.all(imageFiles?.map(async(file, index) =>await deleteImage(product.seller.toString()+index)))
+        await Promise.all(imageFiles?.map(async(file, index) =>await deleteImage(product.images[index]?.publicId +index)))
         let imageArr = [];
         await Promise.all(imageFiles.map(async (file, index) => {
-            const response = await uploadOnCloudinary(file.path, req.user._id + index);
+            const response = await uploadOnCloudinary(file.path, uuidv4() + index);
             // console.log(response);
             imageArr.push({
                 publicId: response.public_id,
@@ -83,7 +83,7 @@ export const UpdateProductById = async (req, res) => {
         const updatedProduct = await Product.findByIdAndUpdate(
             req.params.id,
             {
-                $set: { ...req.body, seller: req.user.id, image:imageArr }
+                $set: { ...req.body, seller: req.user.id, image:imageArr}
             },
             {
                 new: true
@@ -106,7 +106,7 @@ export const UpdateProductById = async (req, res) => {
 // FETCH PRODUCT BY ID
 export const ProductById = async (req, res) => {
     try {
-        const product = await Product.findById(req.params.id);
+        const product = await Product.findById(req.params.id).populate("seller").populate("category")
         if (!product) {
             return res.status(404).json({
                 success: true,
@@ -176,7 +176,14 @@ export const DeleteProductById = async (req, res) => {
                 message: "Product not found"
             });
         }
-        await Promise.all(product.images?.map(async(image, index) => await deleteImage(product.seller+index)))
+        // await Promise.all(product.images?.map(async(image, index) => await deleteImage(product.images[index]?.publicId +index)))
+         // Delete each image associated with the product
+         if (product.images) {
+            await Promise.all(product.images.map(async (image) => {
+                await deleteImage(image.publicId);
+            }));
+        }
+
         
         const deletePrdouct = await Product.findByIdAndDelete(req.params.id);
         if (!deletePrdouct) {

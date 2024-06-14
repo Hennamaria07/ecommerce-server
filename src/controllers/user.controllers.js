@@ -482,3 +482,24 @@ export const SendMailToAdmin = async (req, res) => {
         })
     }
 }
+
+export const latestSeller = async (req, res) => {
+    try {
+        const seller = await User.find({role : "seller"}).sort({createdAt: -1}).limit(5)
+        if(!seller) {
+            return res.status(404).json({
+                success: false,
+                message: "Seller not found"
+            })
+        }
+        return res.status(200).json({
+            success: true,
+            data: seller
+        })
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        })
+    }
+}
