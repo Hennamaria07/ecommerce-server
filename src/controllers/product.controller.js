@@ -392,7 +392,7 @@ export const FetchTopProduct = async (req, res) => {
 //LATEST PRODUCTS
 export const FetchNewProduct = async (req, res) => {
     try {
-        const products = await Product.find({}).sort({ _id: -1 }).limit(4);
+        const products = await Product.find({}).sort({ _id: -1 }).limit(8);
         return res.status(200).json({
             success: true,
             data: products
