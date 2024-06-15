@@ -22,7 +22,7 @@ router.route("/fetch/products/user")
 router.route("/seller/products")
 .get(verifyUser, authorizedSeller, ProductsBySeller);
 
-router.route("/review/:id")
+router.route("/review")
 .post(verifyUser, ProductReview);
 
 router.route("/top/products")
