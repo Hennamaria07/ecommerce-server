@@ -278,8 +278,9 @@ export const FetchProductsForUser = async (req, res) => {
 // PRODUCT REVIEW BY USER USING PRODUCT ID
 export const ProductReview = async (req, res) => {
     try {
-        const { rating, comment } = req.body;
+        const { rating, comment, id } = req.body;
 
+        // Validate rating and comment
         if (![rating, comment].every(field => field !== undefined && field !== '')) {
             return res.status(400).json({
                 success: false,
@@ -288,20 +289,48 @@ export const ProductReview = async (req, res) => {
         }
 
         const ratingValue = parseInt(rating);
-        console.log('rating', typeof rating)
-        if (isNaN(ratingValue)) {
+        if (isNaN(ratingValue) || ratingValue < 1 || ratingValue > 5) {
             return res.status(400).json({
                 success: false,
-                message: "Rating must be a valid number"
+                message: "Rating must be a valid number between 1 and 5"
             });
         }
 
-        const product = await Product.findById(req.params.id);
+        // Check if the user has purchased the product
+        const orders = await Order.find({ user: req.user._id });
+        if (!orders || orders.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "You need to purchase the product first."
+            });
+        }
+
+        let productFound = false;
+
+        // Iterate through orders and their order items
+        for (const order of orders) {
+            for (const orderItem of order.orderItems) {
+                if (orderItem.product?.toString() === id?.toString()) {
+                    productFound = true;
+                    break;
+                }
+            }
+            if (productFound) break;
+        }
+
+        if (!productFound) {
+            return res.status(404).json({
+                success: false,
+                message: "Product not found in your orders"
+            });
+        }
+
+        const product = await Product.findById(id);
         if (!product) {
             return res.status(404).json({
                 success: false,
                 message: "Product not found"
-            })
+            });
         }
 
         // Check if the user has already reviewed the product
@@ -338,6 +367,8 @@ export const ProductReview = async (req, res) => {
         });
     }
 }
+
+
 
 //TOP 4 PRODUCTS
 export const FetchTopProduct = async (req, res) => {
