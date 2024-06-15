@@ -106,7 +106,10 @@ export const UpdateProductById = async (req, res) => {
 // FETCH PRODUCT BY ID
 export const ProductById = async (req, res) => {
     try {
-        const product = await Product.findById(req.params.id).populate("seller").populate("category")
+        const product = await Product.findById(req.params.id).populate("seller").populate("category").populate({
+            path: 'reviews.user', // Populate user inside reviews
+            model: 'User' // Specify the User model
+        });
         if (!product) {
             return res.status(404).json({
                 success: true,
