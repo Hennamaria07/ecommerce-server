@@ -438,3 +438,19 @@ export const SellerDashboard = async (req, res) => {
     }
 }
 
+// GET BRANDS
+export const GetBrands = async (req, res) => {
+    try {
+        const products = await Product.find({})
+        const brands = products.map(product => product.brand).filter((value, index, self) => self.indexOf(value) === index);
+        return res.status(200).json({
+            success: true,
+            data: brands
+        })
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+}
