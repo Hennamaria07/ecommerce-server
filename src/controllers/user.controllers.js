@@ -402,7 +402,7 @@ export const ForgotPassword = async (req, res) => {
         return res.status(200).json({
             success: true,
             user: user,
-            message: "Email sent successfully",
+            message: "Check your email",
             response
         })
     } catch (error) {
