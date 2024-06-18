@@ -13,7 +13,7 @@ const orderSchema = mongoose.Schema(
                     type: String,
                     required: true
                 },
-                quantity: {
+                qty: {
                     type: Number,
                     required: true
                 },
@@ -51,7 +51,7 @@ const orderSchema = mongoose.Schema(
 
             },
             postalCode: {
-                type: Number,
+                type: String,
                 required: true
             },
             country: {
@@ -78,9 +78,6 @@ const orderSchema = mongoose.Schema(
                 type: String
             },
             updateTime: {
-                type: String
-            },
-            emailAddress: {
                 type: String
             },
         },

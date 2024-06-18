@@ -18,7 +18,11 @@ export const sendUserEmail = async ({ userEmail, subject, userId }) => {
         subject: subject, // Subject line
         html: `<body>
 <p>Dear Admin,</p>
-<p>I am interested in becoming a seller on your platform. You can access my profile <a href="${process.env.FRONTEND_HOST}/admin/user/edit/${userId}">here</a>.</p>
+<p>I am interested in becoming a seller on your platform. You can access my profile details are:</p>
+<p>User Id:${userId}</p>
+<p>User Registered Email:${userEmail}</p>
+<p> OR click the link below </p>
+ <p><a href="${process.env.FRONTEND_HOST}/admin/user/edit/${userId}">here</a>.</p> 
 <p>Thank you.</p>
 <p>Best regards,</p>
 <p>[User's Name]</p>
@@ -27,3 +31,6 @@ export const sendUserEmail = async ({ userEmail, subject, userId }) => {
     const response = await transporter.sendMail(mailoptions);
     return response;
 }
+
+
+

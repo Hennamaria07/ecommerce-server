@@ -7,9 +7,10 @@ import braintree from "braintree";
 //CREATE ORDER
 export const CreateOrder = async (req, res) => {
     try {
-        const { orderItems, shippingAddress, paymentMethod } = req.body;
+        const { orderItems, shippingAddress, paymentMethod, itemsPrice, totalPrice, taxPrice, shippingPrice } = req.body;
+        console.log(orderItems)
 
-        if ([shippingAddress, paymentMethod].some(item => !item)) {
+        if ([shippingAddress, paymentMethod, orderItems, itemsPrice, totalPrice, taxPrice, shippingPrice].some(item => !item)) {
             return res.status(400).json(
                 {
                     success: false,
@@ -28,28 +29,28 @@ export const CreateOrder = async (req, res) => {
         // fetches the product details from the database for all the products included in orderItems
         const ItemsFromDB = await Product.find({
             _id: {
-                $in: orderItems.map(i => i.product),
+                $in: orderItems.map(i => i._id),
             }
         })
 
         // console.log("ItemsFromDB", ItemsFromDB);
 
         const orderItemsFromDB = orderItems.map(i => {
-            const matchItems = ItemsFromDB.find(item => item?._id?.toString() === i?.product?.toString());
+            const matchItems = ItemsFromDB.find(item => item?._id?.toString() === i?._id?.toString());
             if (!matchItems) {
                 throw new Error("Items not found");
             }
 
             return {
                 ...i,
-                product: i.product,
+                product: i._id,
                 price: matchItems.price,
                 seller: matchItems.seller,
                 image: matchItems.images[0]
             }
         })
 
-        const { itemsPrice, shippingPrice, taxPrice, totalPrice } = calcOrderPrices(orderItemsFromDB);
+        // const { itemsPrice, shippingPrice, taxPrice, totalPrice } = calcOrderPrices(orderItemsFromDB);
         // console.log("orderItemsFromDB", orderItemsFromDB);
 
         const order = await Order.create({
@@ -289,7 +290,7 @@ export const MarkAsPayed = async (req, res) => {
        await order.orderItems.map(async (item) => {
             const product = await Product.findById(item.product);
             if(product) {
-                product.quantity -= item.quantity
+                product.quantity -= item.qty
                 await product.save();
             }
         })
@@ -376,46 +377,65 @@ export const PaymentToken = async (req, res) => {
 // PAYMENT
 export const Payment = async (req, res) => {
     try {
-        const {orderId, nonce} = req.body;
-        const order = await Order.findById(orderId._id);
-        if(!order){
+        // Extract orderId and nonce from request body
+        const { orderId, nonce } = req.body;
+
+        // Find the order by ID
+        const order = await Order.findById(orderId);
+        if (!order) {
             return res.status(404).json({
                 success: false,
                 message: "Order not found"
             });
         }
+
+        // Get the total price from the order
         const totalPrice = order.totalPrice;
+
+        // Process the payment transaction
         let newTransaction = gateway.transaction.sale({
             amount: totalPrice,
             paymentMethodNonce: nonce,
             options: {
                 submitForSettlement: true
             }
-        },
-        async (err, response) => {
-            if(response) {
-                order.isPaid = true;
-                order.paidAt = Date.now();
-                order.paymentResult = response;
-                const updateOrder = await order.save();
-                return res.status(200).json(
-                    {
-                        success: true,
-                        data: updateOrder
-                    }
-                );
-            } else {
+        }, async (err, response) => {
+            if (err) {
                 return res.status(500).json({
                     success: false,
                     message: err.message
                 });
             }
-        }
-    )
+
+            if (response.success) {
+                // Update order details on successful payment
+                order.isPaid = true;
+                order.paidAt = Date.now();
+                order.paymentResult = {
+                    id: response.transaction.id,
+                    status: response.transaction.status,
+                    updateTime: response.transaction.updatedAt,
+                };
+
+                // Save the updated order
+                const updatedOrder = await order.save();
+
+                return res.status(200).json({
+                    success: true,
+                    data: updatedOrder,
+                    message: "Payment completed successfully"
+                });
+            } else {
+                return res.status(500).json({
+                    success: false,
+                    message: response.message || "Payment failed"
+                });
+            }
+        });
     } catch (error) {
         return res.status(500).json({
             success: false,
             message: error.message
         });
     }
-}
+};

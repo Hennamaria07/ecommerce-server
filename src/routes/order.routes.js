@@ -37,6 +37,6 @@ router.route("/:id/delivered")
 // PAYMENT ROUTES
 router.route("/payment/braintree")
 .get(verifyUser, PaymentToken)
-.post(verifyUser, Payment)
+.patch(verifyUser, Payment)
 
 export default router
