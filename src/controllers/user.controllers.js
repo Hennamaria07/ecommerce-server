@@ -399,6 +399,7 @@ export const ForgotPassword = async (req, res) => {
             userId: user._id,
             subject: 'Reset Password'
         })
+        console.log(response)
         return res.status(200).json({
             success: true,
             user: user,

@@ -2,16 +2,21 @@ import nodemailer from "nodemailer";
 
 // create reusable transporter object using the default SMTP transport
 export const sendUserEmail = async ({ userEmail, subject, userId }) => {
-    console.log('email', userEmail)
+    // console.log('email', userEmail)
     const transporter = nodemailer.createTransport({
         host: process.env.MAILTRAPER_HOST,
-        port: 2525,
-        auth: {
-            user: process.env.MAILTRAPER_USER,
-            pass: process.env.MAILTRAPER_PASS
+        port: 465,
+        secure: 'SSL',
+        tls: {
+          rejectUnauthorized: false
         },
-    });
-
+        auth: {
+          user: process.env.MAILTRAPER_USER,
+          pass: process.env.MAILTRAPER_PASS
+        },
+        debug: true // Enable debug output
+      });
+      
     const mailoptions = {
         from: process.env.MAILTRAPER_USER, // sender address
         to: userEmail, // list of receivers

@@ -4,12 +4,17 @@ import nodemailer from "nodemailer";
 export const sendAdminEmail = async ({ userEmail, subject, userName}) => {
     const transporter = nodemailer.createTransport({
         host: process.env.MAILTRAPER_HOST,
-        port: 2525,
-        auth: {
-            user: process.env.MAILTRAPER_USER,
-            pass: process.env.MAILTRAPER_PASS
+        port: 465,
+        secure: 'SSL',
+        tls: {
+          rejectUnauthorized: false
         },
-    });
+        auth: {
+          user: process.env.MAILTRAPER_USER,
+          pass: process.env.MAILTRAPER_PASS
+        },
+        debug: true // Enable debug output
+      });
 
     const mailoptions = {
         from: process.env.MAILTRAPER_USER, // sender address
