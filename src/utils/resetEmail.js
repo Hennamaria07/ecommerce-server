@@ -22,7 +22,7 @@ export const sendResetEmail = async ({userEmail, subject, token, userId}) => {
           <p>We've received a request to reset your password for your account at our website.</p>
           <p>If you did not make this request, you can safely ignore this email.</p>
           <p>To reset your password, please click the link below:</p>
-          <a href=${process.env.FRONTEND_HOST}/reset-password?user=${userId}&token=${token}" class="button">Reset Password</a>
+          <a href=${process.env.FRONTEND_HOST}/reset-password?user=${userId}&token=${token} class="button">Reset Password</a>
           <p>This link will expire in 5 minutes.</p>
           <p>If you have any questions, please don't hesitate to contact us at <a href="mailto:support@example.com">support@example.com</a>.</p>
           <p>Best regards,<br>

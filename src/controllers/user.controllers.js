@@ -413,31 +413,32 @@ export const ForgotPassword = async (req, res) => {
     }
 }
 
-// RESET PASSWORD
 export const ResetPassword = async (req, res) => {
     try {
-        const {user, token} = req.query;
-        const {password} = req.body;
-        if(!password){
+        const { user, token } = req.query; // Correctly accessing req.query
+        console.log('query', req.query); // Log req.query to verify inputs
+
+        const { password } = req.body;
+        if (!password) {
             return res.status(400).json({
                 success: false,
                 message: "Password is required"
-            })
+            });
         }
-        if(!user || !token){
+        if (!user || !token) {
             return res.status(400).json({
                 success: false,
                 message: "Invalid Link"
-            })
+            });
         }
         const userInfo = await User.findById(user);
-        if(!userInfo) {
+        if (!userInfo) {
             return res.status(404).json({
                 success: false,
                 message: "User not found"
-            })
+            });
         }
-        if(token === userInfo.forgotPasswordToken && userInfo.forgotPasswordExpiry > Date.now()) {
+        if (token === userInfo.forgotPasswordToken && userInfo.forgotPasswordExpiry > Date.now()) {
             userInfo.password = await bcrypt.hash(password, 10);
             userInfo.forgotPasswordToken = undefined;
             userInfo.forgotPasswordExpiry = undefined;
@@ -445,21 +446,22 @@ export const ResetPassword = async (req, res) => {
             return res.status(200).json({
                 success: true,
                 message: "Password updated successfully"
-            })
+            });
         } else {
             return res.status(400).json({
                 success: false,
                 message: "Invalid token"
-            })
+            });
         }
         
     } catch (error) {
         return res.status(500).json({
             success: false,
             message: error.message
-        })
+        });
     }
-}
+};
+
 
 // USER MAIL TO ADMIN
 export const SendMailToAdmin = async (req, res) => {
