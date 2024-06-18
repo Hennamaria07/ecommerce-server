@@ -58,50 +58,61 @@ export const UpdateProductById = async (req, res) => {
             return res.status(404).json({
                 success: false,
                 message: "Invalid product id"
-            })
+            });
         }
+
         const { name, description, price, category, quantity, brand } = req.body;
-        const imageFiles = req.files
+        const imageFiles = req.files;
 
         if ([name, description, price, category, quantity, brand].some(field => !field)) {
             return res.status(400).json({
                 success: false,
                 message: "All fields are required"
-            })
-        }
-        await Promise.all(imageFiles?.map(async(file, index) =>await deleteImage(product.images[index]?.publicId +index)))
-        let imageArr = [];
-        await Promise.all(imageFiles.map(async (file, index) => {
-            const response = await uploadOnCloudinary(file.path, uuidv4() + index);
-            // console.log(response);
-            imageArr.push({
-                publicId: response.public_id,
-                url: response.url
             });
-        }));
+        }
+
+        let imageArr = product.images; // Default to existing images
+
+        if (imageFiles && imageFiles.length > 0) {
+            // Delete old images
+            await Promise.all(imageArr.map(async (image, index) => {
+                await deleteImage(image.publicId + index);
+            }));
+
+            imageArr = []; // Reset image array
+
+            // Upload new images
+            await Promise.all(imageFiles.map(async (file, index) => {
+                const response = await uploadOnCloudinary(file.path, uuidv4() + index);
+                imageArr.push({
+                    publicId: response.public_id,
+                    url: response.url
+                });
+            }));
+        }
 
         const updatedProduct = await Product.findByIdAndUpdate(
             req.params.id,
             {
-                $set: { ...req.body, seller: req.user.id, image:imageArr}
+                $set: { ...req.body, seller: req.user.id, images: imageArr }
             },
             {
                 new: true
             }
-        )
+        );
 
         return res.status(200).json({
             success: true,
             message: "Product updated successfully",
             data: updatedProduct
-        })
+        });
     } catch (error) {
         return res.status(500).json({
             success: false,
             message: error.message
         });
     }
-}
+};
 
 // FETCH PRODUCT BY ID
 export const ProductById = async (req, res) => {
