@@ -18,7 +18,10 @@ router.route("/profile")
 router.route("/logout")
 .post(Logout);
 
-router.route("/forgot-password").post(ForgotPassword)
+router.route("/forgot-password")
+.post(ForgotPassword);
+
+router.route("/reset-password")
 .patch(ResetPassword);
 
 router.route("/become-seller").post(verifyUser, SendMailToAdmin)

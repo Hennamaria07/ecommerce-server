@@ -63,6 +63,7 @@ export const UpdateProductById = async (req, res) => {
 
         const { name, description, price, category, quantity, brand } = req.body;
         const imageFiles = req.files;
+        console.log('Image Files', imageFiles)
 
         if ([name, description, price, category, quantity, brand].some(field => !field)) {
             return res.status(400).json({
