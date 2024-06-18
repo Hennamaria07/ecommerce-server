@@ -424,6 +424,12 @@ export const ResetPassword = async (req, res) => {
                 message: "Password is required"
             })
         }
+        if(!user || !token){
+            return res.status(400).json({
+                success: false,
+                message: "Invalid Link"
+            })
+        }
         const userInfo = await User.findById(user);
         if(!userInfo) {
             return res.status(404).json({
