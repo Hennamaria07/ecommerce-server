@@ -13,7 +13,7 @@ export const sendUserEmail = async ({ userEmail, subject, userId }) => {
     });
 
     const mailoptions = {
-        from: 'insuke@ai.com', // sender address
+        from: process.env.MAILTRAPER_USER, // sender address
         to: userEmail, // list of receivers
         subject: subject, // Subject line
         html: `<body>
