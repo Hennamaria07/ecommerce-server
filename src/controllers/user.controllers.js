@@ -56,7 +56,7 @@ export const SignUp = async (req, res) => {
                 isAuthenticated: true,
                 data: createdUser,
                 token,
-                tokenExpiry: Date.now() + 86000000
+                tokenExpiry: Date.now() +  864000000
             });
     } catch (error) {
         return res.status(500).json({
@@ -103,7 +103,7 @@ export const SignIn = async (req, res) => {
                 data: loggedUser,
                 isAuthenticated: true,
                 token,
-                tokenExpiry: Date.now() + 86000000
+                tokenExpiry: Date.now() +  864000000
             });
     } catch (error) {
         res.status(500).json({
