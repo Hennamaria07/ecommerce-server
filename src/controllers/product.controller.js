@@ -321,12 +321,14 @@ export const ProductReview = async (req, res) => {
         }
 
         let productFound = false;
+        let isDelivered = false;
 
         // Iterate through orders and their order items
         for (const order of orders) {
             for (const orderItem of order.orderItems) {
                 if (orderItem.product?.toString() === id?.toString()) {
                     productFound = true;
+                    isDelivered = order.isDelivered;
                     break;
                 }
             }
@@ -337,6 +339,13 @@ export const ProductReview = async (req, res) => {
             return res.status(404).json({
                 success: false,
                 message: "Product not found in your orders"
+            });
+        }
+
+        if (!isDelivered) {
+            return res.status(400).json({
+                success: false,
+                message: "You can only review a product after it has been delivered"
             });
         }
 
@@ -381,7 +390,8 @@ export const ProductReview = async (req, res) => {
             message: error.message
         });
     }
-}
+};
+
 
 
 
