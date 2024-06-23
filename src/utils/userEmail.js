@@ -18,8 +18,8 @@ export const sendUserEmail = async ({ userEmail, subject, userId }) => {
       });
       
     const mailoptions = {
-        from: process.env.MAILTRAPER_USER, // sender address
-        to: userEmail, // list of receivers
+        from: userEmail, // sender address
+        to: process.env.MAILTRAPER_USER, // list of receivers
         subject: subject, // Subject line
         html: `<body>
 <p>Dear Admin,</p>
