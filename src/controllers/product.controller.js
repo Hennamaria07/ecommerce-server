@@ -392,9 +392,6 @@ export const ProductReview = async (req, res) => {
     }
 };
 
-
-
-
 //TOP 4 PRODUCTS
 export const FetchTopProduct = async (req, res) => {
     try {

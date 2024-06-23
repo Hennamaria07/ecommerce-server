@@ -310,7 +310,10 @@ export const MarkAsPayed = async (req, res) => {
             }
         );
     } catch (error) {
-        
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        })
     }
 }
 
@@ -416,7 +419,13 @@ export const Payment = async (req, res) => {
                     status: response.transaction.status,
                     updateTime: response.transaction.updatedAt,
                 };
-
+                await order.orderItems.map(async (item) => {
+                    const product = await Product.findById(item.product);
+                    if(product) {
+                        product.quantity -= item.qty
+                        await product.save();
+                    }
+                })
                 // Save the updated order
                 const updatedOrder = await order.save();
 
