@@ -7,6 +7,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { sendResetEmail } from "../utils/resetEmail.js";
 import { sendAdminEmail } from "../utils/AdminEmail.js";
 import { sendUserEmail } from "../utils/userEmail.js";
+import otpGenerator from "otp-generator";
+import { verificationEmail } from "../utils/verificationEmail.js"
 
 const options = {
     httpOnly: true,
@@ -34,29 +36,33 @@ export const SignUp = async (req, res) => {
         };
         const hashedPassword = await bcrypt.hash(password, 10);
         const response = await uploadCloudinary(avatarLocalPath, email);
-        // console.log('response', response)
+        const otp = otpGenerator.generate(4, { digits: true, upperCaseAlphabets: false, lowerCaseAlphabets: false, specialChars: false });
         const user = new User({
             firstName,
             lastName,
             email,
             password: hashedPassword,
+            verificationToken: otp,
+            verificationTokenExpiry: Date.now() + 300000,
             avatar: {
                 publicId: response?.public_id,
                 url: response?.url
             },
             role: role || "user"
         })
+
         await user.save();
         const createdUser = await User.findOne({ email }).select("-password");
-        const token = generateToken(createdUser._id);
-        return res.status(200).cookie("token", token, options).
+        await verificationEmail({
+            userEmail: createdUser.email,
+            subject: "Email Verification",
+            otp,
+            userId: createdUser._id
+        })
+        return res.status(200).
             json({
                 success: true,
-                message: "User registred successfully",
-                isAuthenticated: true,
-                data: createdUser,
-                token,
-                tokenExpiry: Date.now() +  864000000
+                message: "Check your email to verify your account",
             });
     } catch (error) {
         return res.status(500).json({
@@ -70,7 +76,7 @@ export const SignUp = async (req, res) => {
 export const SignIn = async (req, res) => {
     try {
         const { email, password } = req.body;
-        // console.log(email, password)
+
         if ([email, password].some((field) => !field || field?.trim() === "")) {
             return res.status(400).json({
                 success: false,
@@ -78,13 +84,29 @@ export const SignIn = async (req, res) => {
             });
         };
         const user = await User.findOne({ email })
-        // console.log(user);
+
         if (!user) {
             return res.status(404).json({
                 success: false,
                 message: "User not found"
             });
         };
+        if(user.isVerified === false) {
+            const otp = otpGenerator.generate(4, { digits: true, upperCaseAlphabets: false, lowerCaseAlphabets: false, specialChars: false });
+            user.verificationToken = otp;
+            user.verificationTokenExpiry = Date.now() + 300000;
+            await user.save();
+            await verificationEmail({
+                userEmail: user.email,
+                subject: "Email Verification",
+                otp,
+                userId: user._id
+            })
+            return res.status(401).json({
+                success: false,
+                message: "User is not verified. Please check your email for verify your account"
+            });
+        }
         const passwordCorrect = await bcrypt.compare(password, user.password);
         if (!passwordCorrect) {
             return res.status(401).json({
@@ -94,7 +116,7 @@ export const SignIn = async (req, res) => {
         }
         const loggedUser = await User.findById(user._id).select('-password')
         const token = generateToken(loggedUser._id);
-        // console.log(token);
+
         return res.status(200)
             .cookie("token", token, options)
             .json({
@@ -103,10 +125,109 @@ export const SignIn = async (req, res) => {
                 data: loggedUser,
                 isAuthenticated: true,
                 token,
-                tokenExpiry: Date.now() +  864000000
+                tokenExpiry: Date.now() + 864000000
             });
     } catch (error) {
         res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+}
+
+// EMAIL VERIFICATION
+export const EmailVerification = async (req, res) => {
+    try {
+        const { otp } = req.body;
+        const { id } = req.params;
+
+        if (!otp) {
+            return res.status(400).json({
+                success: false,
+                message: "OTP is required"
+            });
+        }
+
+        const user = await User.findById(id);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+
+        if (user.isVerified) {
+            return res.status(400).json({
+                success: false,
+                message: "User is already verified"
+            });
+        }
+
+        if (otp !== user.verificationToken) {
+            return res.status(401).json({
+                success: false,
+                message: "Invalid OTP"
+            });
+        }
+
+        if (user.verificationTokenExpiry < Date.now()) {
+            return res.status(401).json({
+                success: false,
+                message: "OTP has expired"
+            });
+        }
+
+        user.isVerified = true;
+        user.verificationToken = undefined;
+        user.verificationTokenExpiry = undefined;
+        await user.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "Email verified successfully"
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+}
+
+// RESEND EMAIL VERIFICATION
+export const ResentOpt = async (req, res) => {
+    try {
+        const { email } = req.body;
+        const user = await User.findOne({ email });
+        if(!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+        if(user.isVerified === true) {
+            return res.status(400).json({
+                success: false,
+                message: "User is already verified"
+            });
+        }
+        const otp = otpGenerator.generate(4, { digits: true, upperCaseAlphabets: false, lowerCaseAlphabets: false, specialChars: false });
+        user.verificationToken = otp;
+        user.verificationTokenExpiry = Date.now() + 300000;
+        await user.save();
+        await verificationEmail({
+            userEmail: user.email,
+            subject: "Email Verification",
+            otp,
+            userId: user._id
+        })
+        return res.status(200).json({
+            success: true,
+            message: "Check your email to verify your account",
+        });
+    } catch (error) {
+        return res.status(500).json({
             success: false,
             message: error.message
         });
@@ -160,18 +281,14 @@ export const Profile = async (req, res) => {
 export const Users = async (req, res) => {
     try {
         const search = req.query.search || "";
-        // const page = parseInt(req.query.page) || 1;
-        // const pageSize = 6;
 
         const args = {};
-        if(search !=="") args.$or = [
+        if (search !== "") args.$or = [
             { firstName: { $regex: search, $options: "i" } },
             { email: { $regex: search, $options: "i" } },
         ]
         args.role = "user";
-
-        // const count = await User.countDocuments(args);
-        // const skip = (page - 1) * pageSize;
+        args.isVerified = true;
 
         const users = await User.find(args);
         if (!users) {
@@ -183,8 +300,6 @@ export const Users = async (req, res) => {
         return res.status(200).json({
             success: true,
             data: users,
-            // pages: Math.ceil(count / pageSize),
-            // currentPage: page,
         });
     } catch (error) {
         return res.status(500).json({
@@ -202,12 +317,13 @@ export const Sellers = async (req, res) => {
         const pageSize = 6;
 
         const args = {};
-        if(search!=="") args.$or = [
+        if (search !== "") args.$or = [
             { firstName: { $regex: search, $options: "i" } },
             { email: { $regex: search, $options: "i" } },
         ]
         args.role = "seller";
-        
+        args.isVerified = true;
+
         const count = await User.countDocuments(args);
         const skip = (page - 1) * pageSize;
 
@@ -299,14 +415,14 @@ export const UpdateProfile = async (req, res) => {
 export const DeleteUser = async (req, res) => {
     try {
         const user = await User.findById(req.params.id)
-        if(!user) {
+        if (!user) {
             return res.status(404).json({
                 success: false,
                 message: "User not found"
             });
         }
         await deleteImage(user.email);
-        await User.deleteOne({_id: user._id})
+        await User.deleteOne({ _id: user._id })
         return res.status(200).json({
             success: true,
             message: "User deleted successfully"
@@ -353,23 +469,23 @@ export const UpdatedUserRoleById = async (req, res) => {
             });
         }
         user.role = req.body.role || user.role;
-       const updatedUser = await user.save();
-       await sendAdminEmail({
-        userEmail: updatedUser.email,
-        userName: updatedUser.firstName + " " + updatedUser.lastName
-       })
-       return res.status(200).json({
-        success: true,
-        message: "User updated successfully",
-        data: {
-            _id: updatedUser._id,
-            firstName: updatedUser.firstName,
-            lastName: updatedUser.lastName,
-            email: updatedUser.email,
-            role: updatedUser.role,
-            avatar: updatedUser.avatar
-        }
-    })
+        const updatedUser = await user.save();
+        await sendAdminEmail({
+            userEmail: updatedUser.email,
+            userName: updatedUser.firstName + " " + updatedUser.lastName
+        })
+        return res.status(200).json({
+            success: true,
+            message: "User updated successfully",
+            data: {
+                _id: updatedUser._id,
+                firstName: updatedUser.firstName,
+                lastName: updatedUser.lastName,
+                email: updatedUser.email,
+                role: updatedUser.role,
+                avatar: updatedUser.avatar
+            }
+        })
     } catch (error) {
         return res.status(500).json({
             success: false,
@@ -381,9 +497,9 @@ export const UpdatedUserRoleById = async (req, res) => {
 // FORGOT PASSWORD
 export const ForgotPassword = async (req, res) => {
     try {
-        const {email} = req.body;
-        const user = await User.findOne({email});
-        if(!user) {
+        const { email } = req.body;
+        const user = await User.findOne({ email });
+        if (!user) {
             return res.status(404).json({
                 success: false,
                 message: "User not found"
@@ -391,7 +507,7 @@ export const ForgotPassword = async (req, res) => {
         }
         const token = uuidv4();
         user.forgotPasswordToken = token;
-        user.forgotPasswordExpiry = Date.now() + 3600000; //6mins
+        user.forgotPasswordExpiry = Date.now() + 300000;
         await user.save();
         const response = await sendResetEmail({
             userEmail: user.email,
@@ -454,7 +570,7 @@ export const ResetPassword = async (req, res) => {
                 message: "Invalid token"
             });
         }
-        
+
     } catch (error) {
         return res.status(500).json({
             success: false,
@@ -468,16 +584,16 @@ export const ResetPassword = async (req, res) => {
 export const SendMailToAdmin = async (req, res) => {
     try {
         const user = await User.findById(req.user._id);
-        if(!user) {
+        if (!user) {
             return res.status(404).json({
                 success: false,
                 message: "User does not exist"
             })
         }
         const response = await sendUserEmail({
-            userEmail : user.email,
-            subject : "Request to Become a Seller",
-            userId : user._id
+            userEmail: user.email,
+            subject: "Request to Become a Seller",
+            userId: user._id
         })
         return res.status(200).json({
             success: true,
@@ -494,8 +610,8 @@ export const SendMailToAdmin = async (req, res) => {
 
 export const latestSeller = async (req, res) => {
     try {
-        const seller = await User.find({role : "seller"}).sort({createdAt: -1}).limit(5)
-        if(!seller) {
+        const seller = await User.find({ role: "seller", isVerified: true }).sort({ createdAt: -1 }).limit(5)
+        if (!seller) {
             return res.status(404).json({
                 success: false,
                 message: "Seller not found"

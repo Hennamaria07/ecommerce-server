@@ -28,6 +28,12 @@ const userSchema = new Schema(
         },
         forgotPasswordToken: String,
         forgotPasswordExpiry: Date,
+        isVerified: {
+            type: Boolean,
+            default: false
+        },
+        verificationToken: String,
+        verificationTokenExpiry: Date,
         role: {
             type: String,
             default: "user",

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { DeleteUser, Logout, Profile, Sellers, SignIn, SignUp, UpdateProfile, ProfileById, Users, UpdatedUserRoleById, ForgotPassword, ResetPassword, SendMailToAdmin, latestSeller } from "../controllers/user.controllers.js";
+import { DeleteUser, Logout, Profile, Sellers, SignIn, SignUp, UpdateProfile, ProfileById, Users, UpdatedUserRoleById, ForgotPassword, ResetPassword, SendMailToAdmin, latestSeller, EmailVerification, ResentOpt } from "../controllers/user.controllers.js";
 import upload from "../middlewares/multer.middleware.js"
 import { authorizedAdmin, authorizedAdminOrSeller, verifyUser } from "../middlewares/verifyjwt.middleware.js";
 
@@ -24,7 +24,14 @@ router.route("/forgot-password")
 router.route("/reset-password")
 .patch(ResetPassword);
 
+router.route("/:id/verify")
+.patch(EmailVerification)
+
+router.route("/resend-verification")
+.patch(ResentOpt);
+
 router.route("/become-seller").post(verifyUser, SendMailToAdmin)
+
 
 router.route("/")
 .get(verifyUser, authorizedAdmin , Users);
