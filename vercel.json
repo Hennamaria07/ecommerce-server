@@ -1,7 +1,8 @@
-{
-    "version": 2,
-    "builds": [
+ 
+  {
+    "rewrites": [
         {
+<<<<<<< HEAD
             "src": "./src/index.js",
             "use": "@vercel/node"
         }
@@ -10,6 +11,10 @@
         {
             "src": "/(.*)",
             "dest": "/"
+=======
+            "source": "/(.*)",
+            "destination": "/"
+>>>>>>> 357a77102ec4d4e2b14b4dee5d3212c26404439f
         }
     ]
 }
