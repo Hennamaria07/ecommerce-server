@@ -1,4 +1,5 @@
-import Category from "../models/category.model.js"
+import Category from "../models/category.model.js";
+import Product from "../models/product.model.js"
 
 //CREATE CATEGORY
 export const CreateCategory = async (req, res) => {
@@ -116,6 +117,13 @@ export const UpdateCategory = async (req, res) => {
 // DELETE CATEGORY BY ID
 export const DeleteCategory = async (req, res) => {
     try {
+        const products = await Product.find({category: req.params.id})
+        if(products.length > 0) {
+            return res.status(400).json({
+                success: false,
+                message: "Unable to delete. This category is associated with products"
+            });
+        }
         const deleteCategorty = await Category.findByIdAndDelete(req.params.id);
         if(!deleteCategorty) {
             return res.status(404).json({
