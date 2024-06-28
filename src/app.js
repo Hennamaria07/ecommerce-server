@@ -9,7 +9,7 @@ import orderRoute from "./routes/order.routes.js";
 const app = new express();
 
 app.use(cors({
-    origin: ["https://urban-nest-app.netlify.app","https://urban-nest-app.netlify.app/", "http://localhost:5173"],
+    origin: ["https://urban-nest-app.netlify.app", "http://localhost:5173"],
     credentials: true,
     methods: ["GET", "HEAD", "OPTIONS", "POST", "DELETE", "PUT", "PATCH"],
     allowedHeaders: ['Content-Type', 'Authorization'],
