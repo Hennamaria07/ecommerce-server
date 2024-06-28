@@ -9,12 +9,11 @@ import orderRoute from "./routes/order.routes.js";
 const app = new express();
 
 app.use(cors({
-    origin: 'http://localhost:5173',
+    origin: ["https://urban-nest-app.netlify.app", "https://urban-nest-furniture.vercel.app"],
     credentials: true,
     methods: ["GET", "HEAD", "OPTIONS", "POST", "DELETE", "PUT", "PATCH"],
     allowedHeaders: ['Content-Type', 'Authorization'],
-  }));
-
+}))
 app.use(express.json({ limit: "16kb" }));
 app.use(express.urlencoded({ extended: true, limit: "16kb" }));
 app.use(cookieParser());
