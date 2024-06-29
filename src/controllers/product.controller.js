@@ -4,6 +4,7 @@ import Order from "../models/order.model.js";
 import uploadOnCloudinary from "../utils/uploadOnCloudinary.js";
 import deleteImage from "../utils/removeCloudinary.js";
 import { v4 as uuidv4 } from 'uuid';
+import Category from "../models/category.model.js";
 // CREATE PRODUCT
 export const CreateProduct = async (req, res) => {
     try {
@@ -431,6 +432,9 @@ export const AdminDashboard = async (req, res) => {
         const userCount = await User.find({role: "user"}).countDocuments();
         const sellerCount = await User.find({role: "seller"}).countDocuments();
         const orderCount = await Order.countDocuments();
+        const categoryCount = await Category.countDocuments();
+        const products = await Product.find({})
+        const brands = products.map(product => product.brand).filter((value, index, self) => self.indexOf(value) === index);
         return res.status(200).json({
             success: true,
             data: {
@@ -438,6 +442,8 @@ export const AdminDashboard = async (req, res) => {
                 totalUser: userCount,
                 totalSeller: sellerCount,
                 totalOrder: orderCount,
+                totalCategory: categoryCount,
+                totalBrand: brands?.length
             }
         })
     } catch (error) {

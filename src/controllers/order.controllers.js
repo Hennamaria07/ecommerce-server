@@ -268,6 +268,84 @@ export const TotalSalesByDate = async (req, res) => {
     }
 }
 
+// TOTAL SALES OF ORDER BY DATE FOR CORRESPONDING SELLER
+export const TotalSalesByDateForSeller = async (req, res) => {
+    try {
+        const sellerId = req.user._id; // Assuming req.user._id contains the seller's ID
+
+        const salesByDate = await Order.aggregate([
+            {
+                $match: {
+                    isPaid: true,
+                    "orderItems.seller": sellerId // Match orders where seller matches req.user._id
+                },
+            },
+            {
+                $group: {
+                    _id: {
+                        $dateToString: { format: "%Y-%m-%d", date: "$paidAt" },
+                    },
+                    totalSales: { $sum: "$totalPrice" },
+                },
+            },
+        ]);
+
+        return res.status(200).json(
+            { 
+                success: true,
+                data: salesByDate
+            }
+        );
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+}
+
+export const TotalSalesBySeller = async (req, res) => {
+    try {
+        const sellerId = req.user._id; // Assuming req.user._id contains the seller's ID
+
+        const totalSales = await Order.aggregate([
+            {
+                $match: {
+                    isPaid: true,
+                    "orderItems.seller": sellerId // Match orders where seller matches req.user._id
+                },
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalSales: { $sum: "$totalPrice" },
+                },
+            },
+        ]);
+
+        if (totalSales.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "No sales found for the seller",
+            });
+        }
+
+        return res.status(200).json(
+            { 
+                success: true,
+                data: totalSales[0].totalSales // Return total sales amount
+            }
+        );
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+}
+
+
+
 // MARKING THE ORDER AS PAYED
 export const MarkAsPayed = async (req, res) => {
     try {

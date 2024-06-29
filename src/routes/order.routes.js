@@ -1,6 +1,6 @@
 import { Router } from "express";
 import {authorizedAdmin, authorizedAdminOrSeller, authorizedSeller, verifyUser} from "../middlewares/verifyjwt.middleware.js"
-import { CreateOrder, GetOrderBy, MarkAsDelivered, MarkAsPayed, Orders, Payment, PaymentToken, SellerOrders, TotalCount, TotalSales, TotalSalesByDate, UserOrders } from "../controllers/order.controllers.js";
+import { CreateOrder, GetOrderBy, MarkAsDelivered, MarkAsPayed, Orders, Payment, PaymentToken, SellerOrders, TotalCount, TotalSales, TotalSalesByDate, TotalSalesByDateForSeller, TotalSalesBySeller, UserOrders } from "../controllers/order.controllers.js";
 
 const router = new Router();
 
@@ -24,6 +24,10 @@ router.route("/total-sales")
 
 router.route("/total-sales-date")
 .get(verifyUser, authorizedAdmin, TotalSalesByDate);
+router.route("/seller/total-sales-date")
+.get(verifyUser, authorizedSeller, TotalSalesByDateForSeller);
+router.route("/seller/total-sales")
+.get(verifyUser, authorizedSeller, TotalSalesBySeller);
 
 router.route("/:id")
 .get(verifyUser, GetOrderBy);
