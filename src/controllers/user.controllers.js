@@ -9,6 +9,7 @@ import { sendAdminEmail } from "../utils/AdminEmail.js";
 import { sendUserEmail } from "../utils/userEmail.js";
 import otpGenerator from "otp-generator";
 import { verificationEmail } from "../utils/verificationEmail.js"
+import Product from "../models/product.model.js";
 
 const options = {
     httpOnly: true,
@@ -421,6 +422,17 @@ export const DeleteUser = async (req, res) => {
                 message: "User not found"
             });
         }
+        const products = await Product.find({seller: req.params.id})
+        for (const product of products) {
+            
+            if (product.images) {
+                await Promise.all(product.images.map(async (image) => {
+                    await deleteImage(image.publicId);
+                }));
+            }
+
+            await Product.deleteOne({ _id: product._id });
+        }        
         await deleteImage(user.email);
         await User.deleteOne({ _id: user._id })
         return res.status(200).json({
