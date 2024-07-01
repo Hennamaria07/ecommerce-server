@@ -605,7 +605,8 @@ export const SendMailToAdmin = async (req, res) => {
         const response = await sendUserEmail({
             userEmail: user.email,
             subject: "Request to Become a Seller",
-            userId: user._id
+            userId: user._id,
+            userName: user.firstName + " " + user.lastName
         })
         return res.status(200).json({
             success: true,

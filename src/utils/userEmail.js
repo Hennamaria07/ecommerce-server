@@ -1,7 +1,7 @@
 import nodemailer from "nodemailer";
 
 // create reusable transporter object using the default SMTP transport
-export const sendUserEmail = async ({ userEmail, subject, userId }) => {
+export const sendUserEmail = async ({ userEmail, subject, userId, userName }) => {
     // console.log('email', userEmail)
     const transporter = nodemailer.createTransport({
         host: process.env.MAILTRAPER_HOST,
@@ -67,8 +67,10 @@ export const sendUserEmail = async ({ userEmail, subject, userId }) => {
   <p>Dear Admin,</p>
   <p>I am interested in becoming a seller on your platform. Below are my profile details:</p>
   <p>User ID: ${userId}</p>
+  <p>User Name: ${userName}</p>
   <p>User Registered Email: ${userEmail}</p>
-  <p>Alternatively, you can access my profile <p class="button"><a href='${process.env.FRONTEND_HOST}/admin/user/edit/${userId}'>here</p>.</a></p> 
+  <p>Alternatively, you can access my profile <p class="button"><a href='${process.env.FRONTEND_HOST}/admin/user/edit/${userId}'>here</p></a></p> 
+  <p>or copy the link here <a href='${process.env.FRONTEND_HOST}/admin/user/edit/${userId}'>${process.env.FRONTEND_HOST}/admin/user/edit/${userId}</a></p>
   <p>Thank you.</p>
   <p>Best regards,</p>
   <p>UrbanNest Team</p>

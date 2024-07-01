@@ -192,7 +192,6 @@ export const DeleteProductById = async (req, res) => {
                 message: "Product not found"
             });
         }
-        // await Promise.all(product.images?.map(async(image, index) => await deleteImage(product.images[index]?.publicId +index)))
          // Delete each image associated with the product
          if (product.images) {
             await Promise.all(product.images.map(async (image) => {
