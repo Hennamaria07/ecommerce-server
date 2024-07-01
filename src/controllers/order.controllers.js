@@ -347,53 +347,53 @@ export const TotalSalesBySeller = async (req, res) => {
 
 
 // // MARKING THE ORDER AS PAYED
-// export const MarkAsPayed = async (req, res) => {
-//     try {
-//         const {id, status, updateTime, emailAddress} = req.body;
-//         if([status, updateTime, emailAddress, id].some(field => !field)) {
-//             return res.status(400).json(
-//                 {
-//                     success: false,
-//                     message: "Please provide all required fields"
-//                 }
-//             )
-//         }
-//         const order = await Order.findById(req.params.id);
-//         if(!order) {
-//             return res.status(404).json({
-//                 success: false,
-//                 message: "Order not found"
-//             });
-//         }
-//        await order.orderItems.map(async (item) => {
-//             const product = await Product.findById(item.product);
-//             if(product) {
-//                 product.quantity -= item.qty
-//                 await product.save();
-//             }
-//         })
-//         order.isPaid = true;
-//         order.paidAt = Date.now();
-//         order.paymentResult = {
-//             id,
-//             status,
-//             updateTime,
-//             emailAddress
-//         }
-//         const updateOrder = await order.save();
-//         return res.status(200).json(
-//             {
-//                 success: true,
-//                 data: updateOrder
-//             }
-//         );
-//     } catch (error) {
-//         return res.status(500).json({
-//             success: false,
-//             message: error.message
-//         })
-//     }
-// }
+export const MarkAsPayed = async (req, res) => {
+    try {
+        const {id, status, updateTime, emailAddress} = req.body;
+        if([status, updateTime, emailAddress, id].some(field => !field)) {
+            return res.status(400).json(
+                {
+                    success: false,
+                    message: "Please provide all required fields"
+                }
+            )
+        }
+        const order = await Order.findById(req.params.id);
+        if(!order) {
+            return res.status(404).json({
+                success: false,
+                message: "Order not found"
+            });
+        }
+       await order.orderItems.map(async (item) => {
+            const product = await Product.findById(item.product);
+            if(product) {
+                product.quantity -= item.qty
+                await product.save();
+            }
+        })
+        order.isPaid = true;
+        order.paidAt = Date.now();
+        order.paymentResult = {
+            id,
+            status,
+            updateTime,
+            emailAddress
+        }
+        const updateOrder = await order.save();
+        return res.status(200).json(
+            {
+                success: true,
+                data: updateOrder
+            }
+        );
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        })
+    }
+}
 
 // MARKING THE ORDER AS DELIVERED
 export const MarkAsDelivered = async(req, res) => {
